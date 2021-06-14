@@ -1,0 +1,93 @@
+﻿@page "/"
+
+<h1>MP3 Cutter App</h1>
+
+<br />
+
+<h3>Upload Files</h3>
+
+<p>
+    <label>
+        Upload up to @maxAllowedFiles files of up to @(maxFileSize / (1024 * 1024)) MB each:
+        <InputFile OnChange="@LoadFiles" accept="audio/mpeg" multiple />
+    </label>
+
+</p>
+
+<p>
+    Start (ms): <input type="number" @bind="CutStartTime" width="50" />
+    End (ms): <input type="number" @bind="CutEndTime" width="50" />
+    <button type="button" class="btn-group-toggle" @onclick="ClickCutAsync">Cut</button>
+    <div>@(CutMessage)</div>
+    <a class="nav-link @(aDownloadHide?"hide-link":"")" href="data:application/octet-stream;base64,@bytesBase64" download="@(CutFileName)">
+        <span class="oi oi-cloud-download" aria-hidden="true"></span> Download!
+    </a>
+</p>
+
+<p>@exceptionMessage</p>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+
+<ul>
+    @foreach (var (file, TextByte) in loadedFiles)
+    {
+
+        <li>Name: @file.Name</li>
+        <li>Size (bytes): @file.Size</li>
+        <li>Content type: @file.ContentType</li>
+        <li>
+            ID3 tag Header: @(BitConverter.ToString(iD3Header.ID3tagByteArray));
+            Size: @iD3Header.ID3Size.ToString() (@(BitConverter.ToString(iD3Header.getSizeBytes())))
+        </li>
+        <li>
+            ID3 tag Footer:
+            @if (iD3Footer.isID3tag)
+            {
+                @(BitConverter.ToString(iD3Footer.ID3tagByteArray));
+                <span>Size: @iD3Footer.ID3Size.ToString() (@(BitConverter.ToString(iD3Footer.getSizeBytes())))</span>
+            }
+            else
+            {
+                <span>Not found!</span>
+            }
+        </li>
+        <li>Tổng thời gian: @(TotalTime.ToString()) Milisecond</li>
+        <li>
+            MP3 first frame => Header: @(BitConverter.ToString(firstFrame.Header.byteHeaderArray)) (4 bytes)
+            <ul>
+                <li>Header with padding: @(BitConverter.ToString(firstFrame.Header.byteHeaderArrayWithPadding)) (4 bytes)</li>
+                <li>Header without padding: @(BitConverter.ToString(firstFrame.Header.byteHeaderArrayWithoutPadding)) (4 bytes)</li>
+                <li>MPEG Version: @(firstFrame.Header.MPEGVersion.ToString())</li>
+                <li>MPEG Layer: @(firstFrame.Header.MPEGLayer.ToString())</li>
+                <li>Protected by CRC: @(firstFrame.Header.isProtectionBit.ToString())</li>
+                <li>Bitrate: @(firstFrame.Header.Bitrate.ToString())</li>
+                <li>Frequency: @(firstFrame.Header.Frequency.ToString())</li>
+                <li>Padding: @(firstFrame.Header.isPadding.ToString())</li>
+                <li>Current frame lenght: @(firstFrame.FrameLenght.ToString())</li>
+                <li>Start Frame Position: @(firstFrame.StartBytePosition.ToString())</li>
+                <li>End Frame Position: @(firstFrame.EndBytePosition.ToString())</li>
+                <li>FPS: @(firstFrame.FPS.ToString())</li>
+                <li>Milisecond per Frame: @(firstFrame.MilisecondPerFrame.ToString())</li>
+
+            </ul>
+        </li>
+        <li>
+            MP3 End frame => Header: @(BitConverter.ToString(endFrame.Header.byteHeaderArray)) (4 bytes)
+            <ul>
+                <li>Padding: @(endFrame.Header.isPadding.ToString())</li>
+                <li>Current frame lenght: @(endFrame.FrameLenght.ToString())</li>
+                <li>Start Frame Position: @(endFrame.StartBytePosition.ToString())</li>
+                <li>End Frame Position: @(endFrame.EndBytePosition.ToString())</li>
+                <li>FPS: @(endFrame.FPS.ToString())</li>
+                <li>Milisecond per Frame: @(endFrame.MilisecondPerFrame.ToString())</li>
+            </ul>
+        </li>
+
+        <li>Nội dung: @TextByte</li>
+
+    }
+</ul>
+
